@@ -333,19 +333,7 @@
               marginBottom: '60px',
               textTransform: 'uppercase',
             }
-          }, 'Sound · Software · Hardware'),
-          
-          // Description
-          e('p', {
-            style: {
-              fontSize: isMobile ? '16px' : '20px',
-              color: colors.walnut,
-              lineHeight: '1.8',
-              marginBottom: '50px',
-              maxWidth: '600px',
-              margin: '0 auto 50px',
-            }
-          }, 'Crafting instruments and experiences that bridge vintage analog character with modern digital workflow.'),
+          }, 'Sound · Technology'),
           
           // CTA Buttons
           e('div', {
@@ -443,13 +431,7 @@
           specs: ['Open Source', 'MIDI Controller', 'Desktop Interface', 'Biometric Input', 'USB Connectivity'],
           link: '#'
         },
-        {
-          name: 'TwoPine Web Synth',
-          status: 'COMING SOON',
-          description: 'A fully functional dual-oscillator synthesizer running entirely in your browser. Play, experiment, and create music with vintage warmth and modern precision.',
-          specs: ['Web Audio API', 'ADSR Envelope', 'Reverb FX', 'Touch Ready', 'No Installation'],
-          link: null
-        },
+        
       ];
 
       return e('section', {
@@ -659,7 +641,7 @@
                 lineHeight: '1.8',
                 marginBottom: '30px',
               }
-            }, 'Ambient soundscapes, experimental compositions, and textural explorations. Dive into our catalog.'),
+            }, 'Dive into the catalog.'),
             
             e('a', {
               href: 'https://twopine.bandcamp.com',
@@ -767,7 +749,7 @@
               maxWidth: '600px',
               marginBottom: isMobile ? '40px' : '60px',
             }
-          }, 'Merchandise, albums, and digital goods. Support independent music and creative tools.'),
+          }, 'Merchandise, albums, and digital goods.'),
           
           e('div', {
             style: {
@@ -838,7 +820,7 @@
 
       const handleSubmit = (evt) => {
         evt.preventDefault();
-        const mailtoLink = 'mailto:contact@twopinemusic.com?subject=Message from ' + 
+        const mailtoLink = 'mailto:twopinemusic@gmail.com?subject=Message from ' + 
                           formData.name + '&body=' + encodeURIComponent(formData.message) + 
                           '%0A%0AFrom: ' + formData.email;
         window.location.href = mailtoLink;
