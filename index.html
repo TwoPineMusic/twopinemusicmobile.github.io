@@ -344,7 +344,7 @@
               maxWidth: '600px',
               margin: '0 auto 50px',
             }
-          }, 'Crafting instruments and experiences'),
+          }, 'Crafting instruments and experiences.'),
           
           // CTA Buttons
           e('div', {
@@ -361,9 +361,18 @@
             ].map((btn, i) =>
               e('button', {
                 key: i,
-                onClick: () => setCurrentPage(btn.page),
+                onClick: (evt) => {
+                  evt.preventDefault();
+                  setCurrentPage(btn.page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                onTouchEnd: (evt) => {
+                  evt.preventDefault();
+                  setCurrentPage(btn.page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
                 style: {
-                  padding: '16px 32px',
+                  padding: '18px 36px',
                   background: i === 0 ? colors.walnut : 'transparent',
                   color: i === 0 ? colors.cream : colors.walnut,
                   border: i === 0 ? 'none' : '2px solid ' + colors.walnut,
@@ -374,6 +383,11 @@
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   fontWeight: '500',
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation',
+                  userSelect: 'none',
+                  minHeight: '44px',
+                  minWidth: '44px',
                 },
                 onMouseEnter: (evt) => {
                   evt.target.style.background = colors.orange;
@@ -442,7 +456,7 @@
           specs: ['Open Source', 'MIDI Controller', 'Desktop Interface', 'Biometric Input', 'USB Connectivity'],
           link: '#'
         },
-  
+        
       ];
 
       return e('section', {
@@ -478,7 +492,7 @@
               maxWidth: '600px',
               marginBottom: isMobile ? '40px' : '60px',
             }
-          }, 'We design instruments that bridge the gap between vintage analog character and modern workflow integration. Every product is built to inspire.'),
+          }, 'Artist focused design'),
           
           e('div', {
             style: {
