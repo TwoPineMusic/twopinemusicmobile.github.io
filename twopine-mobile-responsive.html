@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>TwoPine — Sound · Software · Hardware</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" 
+          integrity="sha512-8Q6Y9XnTbOE+JNvjBQwJ2H8S+UV4uA6hiRykhdtIyDYZ2TprdNmWOUaKdGzOhyr4dCyk287OejbPvwl7lrfqrQ==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" 
+          integrity="sha512-MOCpqoRoisCTwJ8vQQiciZv0qcpROCidek3GTFS6KTk2+y7munJIlKCVkFCYY+p3ErYFXCjmFjnfTTRSC1OHWQ==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Josefin Sans', 'Futura', 'Century Gothic', sans-serif;
+      background: #FDF6E3;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    a, button { cursor: pointer; }
+    ::selection { background: #E07B3C; color: #FDF6E3; }
+    
+    /* Prevent text selection during drag */
+    .no-select {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script>
+    const { useState, useEffect, useRef, useCallback } = React;
+    const e = React.createElement;
+
+    const colors = {
+      cream: '#FDF6E3',
+      warmWhite: '#FAF7F0',
+      walnut: '#5D4037',
+      walnutLight: '#8B7355',
+      orange: '#E07B3C',
+      mustard: '#D4A03C',
+      teal: '#2A7B72',
+      warmGray: '#6B635B',
+      darkBrown: '#3D2E24',
+    };
+
+    // Mobile detection hook
+    const useIsMobile = () => {
+      const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+      
+      useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+      
+      return isMobile;
+    };
+
+    // Navigation Component with Hamburger Menu
+    const Navigation = ({ currentPage, setCurrentPage }) => {
+      const [scrolled, setScrolled] = useState(false);
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      const isMobile = useIsMobile();
+
+      useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const menuItems = ['Technology', 'Music', 'Store', 'Contact'];
+
+      return e('nav', {
+        style: {
+          position: 'fixed', top: 0, left: 0, right: 0,
+          padding: isMobile ? '16px 20px' : (scrolled ? '16px 40px' : '24px 40px'),
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          zIndex: 1000,
+          background: scrolled || mobileMenuOpen ? 'rgba(253, 246, 227, 0.95)' : 'transparent',
+          backdropFilter: scrolled || mobileMenuOpen ? 'blur(10px)' : 'none',
+          borderBottom: scrolled || mobileMenuOpen ? '1px solid rgba(93, 64, 55, 0.1)' : 'none',
+          transition: 'all 0.3s ease',
+        }
+      },
+        // Logo
+        e('div', {
+          onClick: () => {
+            setCurrentPage('home');
+            setMobileMenuOpen(false);
+          },
+          style: { 
+            fontSize: isMobile ? '14px' : '16px', 
+            letterSpacing: isMobile ? '3px' : '5px', 
+            fontWeight: '500', 
+            textTransform: 'uppercase', 
+            cursor: 'pointer',
+            zIndex: 1001,
+          }
+        },
+          e('span', { style: { color: colors.orange } }, 'Two'),
+          e('span', { style: { color: colors.walnut } }, 'Pine')
+        ),
+        
+        // Desktop Menu
+        !isMobile && e('div', { style: { display: 'flex', gap: '35px', fontSize: '11px', letterSpacing: '2px' } },
+          menuItems.map(item =>
+            e('a', {
+              key: item,
+              onClick: () => setCurrentPage(item.toLowerCase()),
+              style: {
+                color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
+                textDecoration: 'none', 
+                transition: 'color 0.3s', 
+                textTransform: 'uppercase',
+                fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
+              },
+              onMouseEnter: (evt) => evt.target.style.color = colors.orange,
+              onMouseLeave: (evt) => { if (currentPage !== item.toLowerCase()) evt.target.style.color = colors.warmGray; }
+            }, item)
+          )
+        ),
+        
+        // Mobile Hamburger Button
+        isMobile && e('button', {
+          onClick: () => setMobileMenuOpen(!mobileMenuOpen),
+          style: {
+            background: 'none',
+            border: 'none',
+            padding: '8px',
+            cursor: 'pointer',
+            zIndex: 1001,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px',
+          }
+        },
+          [0, 1, 2].map(i => e('div', {
+            key: i,
+            style: {
+              width: '24px',
+              height: '2px',
+              background: colors.walnut,
+              transition: 'all 0.3s ease',
+              transform: mobileMenuOpen 
+                ? (i === 0 ? 'translateY(7px) rotate(45deg)' : i === 1 ? 'scaleX(0)' : 'translateY(-7px) rotate(-45deg)')
+                : 'none',
+            }
+          }))
+        ),
+        
+        // Mobile Menu Overlay
+        isMobile && mobileMenuOpen && e('div', {
+          style: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(253, 246, 227, 0.98)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '30px',
+            zIndex: 1000,
+          }
+        },
+          menuItems.map(item =>
+            e('a', {
+              key: item,
+              onClick: () => {
+                setCurrentPage(item.toLowerCase());
+                setMobileMenuOpen(false);
+              },
+              style: {
+                fontSize: '24px',
+                letterSpacing: '4px',
+                color: currentPage === item.toLowerCase() ? colors.orange : colors.walnut,
+                textDecoration: 'none',
+                textTransform: 'uppercase',
+                fontWeight: currentPage === item.toLowerCase() ? '600' : '400',
+                transition: 'all 0.3s',
+              }
+            }, item)
+          )
+        )
+      );
+    };
+
+    // Footer Component
+    const Footer = () => {
+      const isMobile = useIsMobile();
+      
+      return e('footer', {
+        style: {
+          padding: isMobile ? '30px 20px' : '40px',
+          borderTop: '1px solid rgba(93, 64, 55, 0.1)',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          gap: '20px',
+          background: colors.cream,
+        }
+      },
+        e('div', { 
+          style: { 
+            fontSize: '10px', 
+            letterSpacing: '2px', 
+            color: colors.warmGray 
+          } 
+        }, '© 2025 TWOPINE'),
+        e('div', { 
+          style: { 
+            display: 'flex', 
+            flexWrap: 'wrap',
+            gap: isMobile ? '15px' : '25px' 
+          } 
+        },
+          [
+            { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
+            { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
+            { name: 'YouTube', url: 'https://www.youtube.com/@twopine' },
+            { name: 'Instagram', url: 'https://www.instagram.com/twopinemusic/' },
+          ].map(link =>
+            e('a', {
+              key: link.name, 
+              href: link.url, 
+              target: '_blank', 
+              rel: 'noopener noreferrer',
+              style: { 
+                fontSize: '10px', 
+                letterSpacing: '1px', 
+                color: colors.warmGray, 
+                textDecoration: 'none', 
+                transition: 'color 0.3s', 
+                textTransform: 'uppercase' 
+              },
+              onMouseEnter: (evt) => evt.target.style.color = colors.orange,
+              onMouseLeave: (evt) => evt.target.style.color = colors.warmGray,
+            }, link.name)
+          )
+        )
+      );
+    };
+
+    // Grain overlay
+    const GrainOverlay = () => e('div', {
+      style: {
+        position: 'fixed', inset: 0, opacity: 0.03,
+        backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
+        pointerEvents: 'none', zIndex: 9999,
+      }
+    });
+
+    // ============ HOME PAGE WITH SYNTH ============
+    const HomePage = () => {
+      const isMobile = useIsMobile();
+      const [time, setTime] = useState(0);
+      const [loaded, setLoaded] = useState(false);
+      const [isMuted, setIsMuted] = useState(true);
+      const [volume, setVolume] = useState(0.3);
+      const [audioInitialized, setAudioInitialized] = useState(false);
+      const [activeNotes, setActiveNotes] = useState(new Set());
+      
+      const audioContextRef = useRef(null);
+      const masterGainRef = useRef(null);
+      const reverbGainRef = useRef(null);
+      const dryGainRef = useRef(null);
+      const reverbInputRef = useRef(null);
+      const limiterRef = useRef(null);
+      const activeVoicesRef = useRef({});
+      
+      const MAX_VOICES = 8;
+      const MAX_REVERB_FEEDBACK = 0.7;
+      
+      const [knobValues, setKnobValues] = useState({
+        osc1Freq: 0.5, osc2Freq: 0.52, osc1Mix: 0.7, osc2Mix: 0.5,
+        filterCutoff: 0.6, filterRes: 0.3,
+        attack: 0.2, decay: 0.4, sustain: 0.7, release: 0.5,
+        reverb: 0.5, amplitude: 0.5,
+      });
+      
+      const [activeKnob, setActiveKnob] = useState(null);
+      const [dragStart, setDragStart] = useState({ y: 0, value: 0 });
+      const lastKnobClickRef = useRef({ name: null, time: 0 });
+
+      const notes = [
+        { name: 'C', freq: 130.81, black: false },
+        { name: 'C#', freq: 138.59, black: true },
+        { name: 'D', freq: 146.83, black: false },
+        { name: 'D#', freq: 155.56, black: true },
+        { name: 'E', freq: 164.81, black: false },
+        { name: 'F', freq: 174.61, black: false },
+        { name: 'F#', freq: 185.00, black: true },
+        { name: 'G', freq: 196.00, black: false },
+        { name: 'G#', freq: 207.65, black: true },
+        { name: 'A', freq: 220.00, black: false },
+        { name: 'A#', freq: 233.08, black: true },
+        { name: 'B', freq: 246.94, black: false },
+      ];
+
+      const createReverb = (ctx) => {
+        const reverbInput = ctx.createGain();
+        const reverbOutput = ctx.createGain();
+        reverbOutput.gain.value = 0.5;
+        
+        const preDelay = ctx.createDelay(0.5);
+        preDelay.delayTime.value = 0.04;
+        
+        const earlyDelays = [0.021, 0.033, 0.045, 0.057, 0.071, 0.089, 0.103, 0.127];
+        const earlyGain = ctx.createGain();
+        earlyGain.gain.value = 0.2;
+        
+        earlyDelays.forEach((time, i) => {
+          const delay = ctx.createDelay(0.5);
+          delay.delayTime.value = time;
+          const gain = ctx.createGain();
+          gain.gain.value = 0.12 - (i * 0.01);
+          reverbInput.connect(delay);
+          delay.connect(gain);
+          gain.connect(earlyGain);
+        });
+        
+        const lateDelayTimes = [0.097, 0.133, 0.167, 0.211, 0.263, 0.307, 0.359, 0.409];
+        const feedbackMatrix = [];
+        
+        lateDelayTimes.forEach((time, i) => {
+          const delay = ctx.createDelay(2);
+          delay.delayTime.value = time;
+          const feedback = ctx.createGain();
+          feedback.gain.value = Math.min(0.65 + (Math.random() * 0.05), MAX_REVERB_FEEDBACK);
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 4000 - (i * 350);
+          filter.Q.value = 0.5;
+          const hiCut = ctx.createBiquadFilter();
+          hiCut.type = 'highpass';
+          hiCut.frequency.value = 80;
+          const gain = ctx.createGain();
+          gain.gain.value = 0.1;
+          
+          preDelay.connect(delay);
+          delay.connect(filter);
+          filter.connect(hiCut);
+          hiCut.connect(feedback);
+          feedback.connect(delay);
+          hiCut.connect(gain);
+          gain.connect(reverbOutput);
+          feedbackMatrix.push({ delay, feedback });
+        });
+        
+        feedbackMatrix.forEach((item, i) => {
+          const nextIndex = (i + 3) % feedbackMatrix.length;
+          const crossGain = ctx.createGain();
+          crossGain.gain.value = 0.08;
+          item.delay.connect(crossGain);
+          crossGain.connect(feedbackMatrix[nextIndex].delay);
+        });
+        
+        const allPassTimes = [0.0051, 0.0076, 0.0103, 0.0134];
+        let diffuserChain = preDelay;
+        allPassTimes.forEach(time => {
+          const allPass = ctx.createBiquadFilter();
+          allPass.type = 'allpass';
+          allPass.frequency.value = 1000 / time;
+          diffuserChain.connect(allPass);
+          diffuserChain = allPass;
+        });
+        
+        reverbInput.connect(preDelay);
+        earlyGain.connect(reverbOutput);
+        
+        return { input: reverbInput, output: reverbOutput };
+      };
+
+      const initAudio = useCallback(() => {
+        if (audioInitialized) return;
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          audioContextRef.current = ctx;
+          const masterGain = ctx.createGain();
+          const dryGain = ctx.createGain();
+          const reverbGain = ctx.createGain();
+          
+          const limiter = ctx.createDynamicsCompressor();
+          limiter.threshold.value = -6;
+          limiter.knee.value = 3;
+          limiter.ratio.value = 20;
+          limiter.attack.value = 0.001;
+          limiter.release.value = 0.1;
+          limiterRef.current = limiter;
+          
+          masterGain.gain.value = 0;
+          dryGain.gain.value = 0.5;
+          reverbGain.gain.value = 0.25;
+          const reverb = createReverb(ctx);
+          dryGain.connect(masterGain);
+          reverb.output.connect(reverbGain);
+          reverbGain.connect(masterGain);
+          masterGain.connect(limiter);
+          limiter.connect(ctx.destination);
+          masterGainRef.current = masterGain;
+          dryGainRef.current = dryGain;
+          reverbGainRef.current = reverbGain;
+          reverbInputRef.current = reverb.input;
+          setAudioInitialized(true);
+        } catch (err) {
+          console.error('Web Audio init failed:', err);
+        }
+      }, [audioInitialized]);
+
+      const triggerNote = useCallback((noteIndex) => {
+        if (!audioInitialized || isMuted) return;
+        const ctx = audioContextRef.current;
+        const now = ctx.currentTime;
+        
+        const voiceIds = Object.keys(activeVoicesRef.current);
+        if (voiceIds.length >= MAX_VOICES) {
+          const oldestId = voiceIds[0];
+          const oldVoice = activeVoicesRef.current[oldestId];
+          if (oldVoice) {
+            oldVoice.voiceGain.gain.cancelScheduledValues(now);
+            oldVoice.voiceGain.gain.setValueAtTime(oldVoice.voiceGain.gain.value, now);
+            oldVoice.voiceGain.gain.linearRampToValueAtTime(0, now + 0.05);
+            oldVoice.osc1.stop(now + 0.1);
+            oldVoice.osc2.stop(now + 0.1);
+            delete activeVoicesRef.current[oldestId];
+          }
+        }
+        
+        const note = notes[noteIndex];
+        const attack = 0.001 + Math.pow(knobValues.attack, 2) * 8;
+        const decay = 0.01 + Math.pow(knobValues.decay, 2) * 12;
+        const sustain = knobValues.sustain;
+        const osc1Detune = (knobValues.osc1Freq - 0.5) * 24;
+        const osc2Detune = (knobValues.osc2Freq - 0.5) * 24;
+        const osc1Freq = note.freq * Math.pow(2, osc1Detune / 12);
+        const osc2Freq = note.freq * Math.pow(2, osc2Detune / 12);
+        
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const voiceGain = ctx.createGain();
+        const osc1Gain = ctx.createGain();
+        const osc2Gain = ctx.createGain();
+        
+        osc1.type = 'sawtooth';
+        osc2.type = 'triangle';
+        osc1.frequency.value = osc1Freq;
+        osc2.frequency.value = osc2Freq;
+        osc1Gain.gain.value = knobValues.osc1Mix * 0.35;
+        osc2Gain.gain.value = knobValues.osc2Mix * 0.35;
+        filter.type = 'lowpass';
+        filter.frequency.value = 200 + knobValues.filterCutoff * 7800;
+        filter.Q.value = 0.5 + knobValues.filterRes * 15;
+        
+        osc1.connect(osc1Gain);
+        osc2.connect(osc2Gain);
+        osc1Gain.connect(filter);
+        osc2Gain.connect(filter);
+        filter.connect(voiceGain);
+        voiceGain.connect(dryGainRef.current);
+        voiceGain.connect(reverbInputRef.current);
+        
+        const amp = knobValues.amplitude * 0.25;
+        voiceGain.gain.setValueAtTime(0, now);
+        voiceGain.gain.linearRampToValueAtTime(amp, now + attack);
+        voiceGain.gain.linearRampToValueAtTime(amp * sustain, now + attack + decay);
+        
+        osc1.start(now);
+        osc2.start(now);
+        
+        const voiceId = noteIndex + '-' + now;
+        activeVoicesRef.current[voiceId] = { osc1, osc2, voiceGain, noteIndex, release: 0.01 + Math.pow(knobValues.release, 2) * 15, amp };
+        setActiveNotes(prev => new Set([...prev, noteIndex]));
+        return voiceId;
+      }, [audioInitialized, isMuted, knobValues, notes]);
+
+      const releaseNote = useCallback((noteIndex) => {
+        if (!audioInitialized) return;
+        const ctx = audioContextRef.current;
+        const now = ctx.currentTime;
+        Object.entries(activeVoicesRef.current).forEach(([voiceId, voice]) => {
+          if (voice.noteIndex === noteIndex) {
+            const { osc1, osc2, voiceGain, release } = voice;
+            voiceGain.gain.cancelScheduledValues(now);
+            voiceGain.gain.setValueAtTime(voiceGain.gain.value, now);
+            voiceGain.gain.linearRampToValueAtTime(0, now + release);
+            osc1.stop(now + release + 0.1);
+            osc2.stop(now + release + 0.1);
+            setTimeout(() => { delete activeVoicesRef.current[voiceId]; }, (release + 0.2) * 1000);
+          }
+        });
+        setActiveNotes(prev => { const next = new Set(prev); next.delete(noteIndex); return next; });
+      }, [audioInitialized]);
+
+      useEffect(() => {
+        if (!audioInitialized) return;
+        const ctx = audioContextRef.current;
+        const now = ctx.currentTime;
+        const reverbMix = knobValues.reverb;
+        dryGainRef.current.gain.setTargetAtTime(0.5 - (reverbMix * 0.3), now, 0.1);
+        reverbGainRef.current.gain.setTargetAtTime(reverbMix * 0.6, now, 0.1);
+      }, [knobValues.reverb, audioInitialized]);
+
+      useEffect(() => {
+        if (!audioInitialized || !masterGainRef.current) return;
+        const ctx = audioContextRef.current;
+        const now = ctx.currentTime;
+        masterGainRef.current.gain.setTargetAtTime(isMuted ? 0 : volume, now, 0.05);
+      }, [isMuted, volume, audioInitialized]);
+
+      useEffect(() => {
+        setLoaded(true);
+        const interval = setInterval(() => { setTime(t => t + 0.03); }, 50);
+        return () => clearInterval(interval);
+      }, []);
+
+      useEffect(() => {
+        return () => { if (audioContextRef.current) audioContextRef.current.close(); };
+      }, []);
+
+      // Enhanced event handling for both mouse and touch
+      const handleKnobStart = (knobName, evt) => {
+        evt.preventDefault();
+        initAudio();
+        
+        const clientY = evt.type.startsWith('touch') ? evt.touches[0].clientY : evt.clientY;
+        
+        const now = Date.now();
+        const lastClick = lastKnobClickRef.current;
+        if (lastClick.name === knobName && (now - lastClick.time) < 300) {
+          setKnobValues(prev => ({ ...prev, [knobName]: 0.5 }));
+          lastKnobClickRef.current = { name: null, time: 0 };
+          return;
+        }
+        lastKnobClickRef.current = { name: knobName, time: now };
+        
+        setActiveKnob(knobName);
+        setDragStart({ y: clientY, value: knobValues[knobName] });
+      };
+
+      const handleMove = useCallback((evt) => {
+        if (activeKnob) {
+          const clientY = evt.type.startsWith('touch') ? evt.touches[0].clientY : evt.clientY;
+          const delta = (dragStart.y - clientY) / (isMobile ? 100 : 150);
+          setKnobValues(prev => ({ ...prev, [activeKnob]: Math.max(0, Math.min(1, dragStart.value + delta)) }));
+        }
+      }, [activeKnob, dragStart, isMobile]);
+
+      const handleEnd = useCallback(() => setActiveKnob(null), []);
+
+      useEffect(() => {
+        if (activeKnob) {
+          window.addEventListener('mousemove', handleMove);
+          window.addEventListener('mouseup', handleEnd);
+          window.addEventListener('touchmove', handleMove, { passive: false });
+          window.addEventListener('touchend', handleEnd);
+          return () => {
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('mouseup', handleEnd);
+            window.removeEventListener('touchmove', handleMove);
+            window.removeEventListener('touchend', handleEnd);
+          };
+        }
+      }, [activeKnob, handleMove, handleEnd]);
+
+      const [volumeDragging, setVolumeDragging] = useState(false);
+      const volumeBarRef = useRef(null);
+
+      const updateVolumeFromEvent = (evt) => {
+        if (volumeBarRef.current) {
+          const rect = volumeBarRef.current.getBoundingClientRect();
+          const clientY = evt.type.startsWith('touch') ? evt.touches[0].clientY : evt.clientY;
+          setVolume(Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height)));
+        }
+      };
+
+      useEffect(() => {
+        if (volumeDragging) {
+          const handleMove = (evt) => {
+            evt.preventDefault();
+            updateVolumeFromEvent(evt);
+          };
+          const handleUp = () => setVolumeDragging(false);
+          window.addEventListener('mousemove', handleMove);
+          window.addEventListener('mouseup', handleUp);
+          window.addEventListener('touchmove', handleMove, { passive: false });
+          window.addEventListener('touchend', handleUp);
+          return () => {
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('mouseup', handleUp);
+            window.removeEventListener('touchmove', handleMove);
+            window.removeEventListener('touchend', handleUp);
+          };
+        }
+      }, [volumeDragging]);
+
+      const generateWave = (offset, baseAmplitude) => {
+        const points = [];
+        const hasActiveNotes = activeNotes.size > 0;
+        const amp = hasActiveNotes ? baseAmplitude * (0.5 + knobValues.amplitude * 1.0) : baseAmplitude * 0.3;
+        for (let i = 0; i <= 100; i++) {
+          const x = i * 3;
+          const wave1 = Math.sin((i * 0.08) + time + offset) * amp * 0.6;
+          const wave2 = Math.sin((i * 0.085) + time * 1.1 + offset) * amp * 0.4;
+          points.push(x + ',' + (40 + wave1 + wave2));
+        }
+        return 'M ' + points.join(' L ');
+      };
+
+      const Knob = ({ name, label, color, size }) => {
+        size = size || (isMobile ? 40 : 50);
+        return e('div', { 
+          style: { 
+            textAlign: 'center',
+            minWidth: isMobile ? '50px' : 'auto',
+          },
+          className: 'no-select',
+        },
+          e('div', {
+            onMouseDown: (evt) => handleKnobStart(name, evt),
+            onTouchStart: (evt) => handleKnobStart(name, evt),
+            style: {
+              width: size + 'px', 
+              height: size + 'px', 
+              borderRadius: '50%',
+              background: 'linear-gradient(145deg, #F5F0E6 0%, #DDD7CB 100%)',
+              boxShadow: activeKnob === name
+                ? '0 4px 12px rgba(93, 64, 55, 0.3), 0 0 0 3px ' + color + '40'
+                : '0 4px 12px rgba(93, 64, 55, 0.2), inset 0 -2px 4px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.8)',
+              margin: '0 auto 6px', 
+              position: 'relative',
+              transform: 'rotate(' + ((knobValues[name] * 270) - 135) + 'deg)',
+              transition: activeKnob === name ? 'none' : 'transform 0.1s ease-out',
+              cursor: 'ns-resize',
+              touchAction: 'none',
+            }
+          },
+            e('div', {
+              style: {
+                position: 'absolute', 
+                top: (size * 0.14) + 'px', 
+                left: '50%',
+                width: '3px', 
+                height: (size * 0.22) + 'px',
+                background: color, 
+                transform: 'translateX(-50%)', 
+                borderRadius: '2px',
+              }
+            }),
+            e('div', {
+              style: {
+                position: 'absolute', 
+                top: '50%', 
+                left: '50%',
+                width: (size * 0.34) + 'px', 
+                height: (size * 0.34) + 'px',
+                background: 'linear-gradient(145deg, ' + colors.walnut + ', ' + colors.darkBrown + ')',
+                borderRadius: '50%', 
+                transform: 'translate(-50%, -50%)', 
+                pointerEvents: 'none',
+              }
+            })
+          ),
+          e('div', { 
+            style: { 
+              fontSize: isMobile ? '6px' : '7px', 
+              letterSpacing: '1px', 
+              color: colors.warmGray, 
+              textTransform: 'uppercase' 
+            } 
+          }, label)
+        );
+      };
+
+      const NotePad = ({ note, index }) => {
+        const isActive = activeNotes.has(index);
+        const handleStart = (evt) => {
+          evt.preventDefault();
+          initAudio();
+          triggerNote(index);
+        };
+        const handleEnd = () => releaseNote(index);
+        
+        return e('button', {
+          onMouseDown: handleStart,
+          onMouseUp: handleEnd,
+          onMouseLeave: () => { if (isActive) releaseNote(index); },
+          onTouchStart: handleStart,
+          onTouchEnd: handleEnd,
+          style: {
+            width: note.black ? (isMobile ? '28px' : '36px') : (isMobile ? '34px' : '42px'), 
+            height: note.black ? (isMobile ? '40px' : '50px') : (isMobile ? '50px' : '60px'),
+            borderRadius: '6px', 
+            border: 'none',
+            background: isActive
+              ? 'linear-gradient(145deg, ' + colors.orange + ' 0%, #c9693a 100%)'
+              : note.black
+                ? 'linear-gradient(145deg, ' + colors.darkBrown + ' 0%, #2a1f1a 100%)'
+                : 'linear-gradient(145deg, ' + colors.warmWhite + ' 0%, #E0D9CC 100%)',
+            boxShadow: isActive
+              ? '0 2px 8px rgba(224, 123, 60, 0.6), 0 0 20px rgba(224, 123, 60, 0.4)'
+              : note.black
+                ? '0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
+                : '0 4px 8px rgba(93, 64, 55, 0.2), inset 0 1px 0 rgba(255,255,255,0.8)',
+            cursor: 'pointer', 
+            transition: 'all 0.08s ease-out',
+            transform: isActive ? 'translateY(2px)' : 'translateY(0)',
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'flex-end', 
+            padding: isMobile ? '4px' : '6px',
+            touchAction: 'none',
+          }
+        },
+          e('span', { 
+            style: { 
+              fontSize: isMobile ? '7px' : '8px', 
+              fontWeight: '600', 
+              color: isActive ? colors.cream : note.black ? colors.walnutLight : colors.warmGray 
+            } 
+          }, note.name)
+        );
+      };
+
+      // Mobile-optimized synth layout
+      if (isMobile) {
+        return e('section', {
+          style: {
+            minHeight: '100vh', 
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            padding: '100px 15px 60px',
+            cursor: activeKnob || volumeDragging ? 'ns-resize' : 'default',
+          },
+          className: 'no-select',
+        },
+          // Compact starburst
+          e('div', {
+            style: {
+              position: 'fixed', 
+              top: '10%', 
+              right: '5%', 
+              width: '80px', 
+              height: '80px',
+              opacity: loaded ? 0.08 : 0, 
+              transition: 'opacity 1.5s ease-out 0.5s',
+              transform: 'rotate(' + (time * 2) + 'deg)', 
+              pointerEvents: 'none',
+            }
+          },
+            e('svg', { viewBox: '0 0 100 100', fill: colors.orange },
+              [...Array(12)].map((_, i) => e('ellipse', { 
+                key: i, 
+                cx: '50', 
+                cy: '50', 
+                rx: '3', 
+                ry: '45', 
+                transform: 'rotate(' + (i * 30) + ' 50 50)' 
+              })),
+              e('circle', { cx: '50', cy: '50', r: '12' })
+            )
+          ),
+          
+          // Mobile Synth Container
+          e('div', {
+            style: {
+              opacity: loaded ? 1 : 0, 
+              transform: loaded ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.97)',
+              transition: 'all 1s ease-out 0.4s', 
+              width: '100%',
+              maxWidth: '400px',
+            }
+          },
+            // Main device
+            e('div', {
+              style: {
+                background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
+                borderRadius: '14px', 
+                padding: '8px',
+                boxShadow: '0 30px 60px -20px rgba(61, 46, 36, 0.4), 0 50px 100px -30px rgba(61, 46, 36, 0.3)',
+              }
+            },
+              // Wood panel
+              e('div', {
+                style: {
+                  background: 'linear-gradient(90deg, ' + colors.walnutLight + ' 0%, #9C8B75 20%, ' + colors.walnutLight + ' 40%, #7D6B55 60%, ' + colors.walnutLight + ' 80%, #9C8B75 100%)',
+                  borderRadius: '10px 10px 0 0', 
+                  padding: '12px 15px 10px',
+                }
+              },
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    marginBottom: '10px' 
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      fontSize: '9px', 
+                      letterSpacing: '3px', 
+                      color: colors.darkBrown, 
+                      textTransform: 'uppercase', 
+                      fontWeight: '600' 
+                    } 
+                  }, 'TwoPine'),
+                  // Mute/Volume button
+                  e('button', {
+                    onClick: () => { initAudio(); setIsMuted(!isMuted); },
+                    style: {
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '50%', 
+                      border: 'none',
+                      background: isMuted ? colors.warmWhite : 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
+                      boxShadow: isMuted ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : '0 4px 15px rgba(224, 123, 60, 0.5)',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      transition: 'all 0.2s',
+                    }
+                  },
+                    e('svg', { 
+                      width: '14', 
+                      height: '14', 
+                      viewBox: '0 0 24 24', 
+                      fill: 'none', 
+                      stroke: isMuted ? colors.warmGray : colors.cream, 
+                      strokeWidth: '2' 
+                    },
+                      e('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
+                      isMuted
+                        ? [
+                            e('line', { key: 'l1', x1: '23', y1: '9', x2: '17', y2: '15' }), 
+                            e('line', { key: 'l2', x1: '17', y1: '9', x2: '23', y2: '15' })
+                          ]
+                        : [
+                            e('path', { key: 'p1', d: 'M15.54 8.46a5 5 0 0 1 0 7.07' }), 
+                            e('path', { key: 'p2', d: 'M19.07 4.93a10 10 0 0 1 0 14.14' })
+                          ]
+                    )
+                  )
+                ),
+                // Waveform display
+                e('div', { 
+                  style: { 
+                    background: '#1a1a18', 
+                    borderRadius: '6px', 
+                    padding: '8px', 
+                    boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)' 
+                  } 
+                },
+                  e('svg', { 
+                    width: '100%', 
+                    height: '50', 
+                    viewBox: '0 0 300 80', 
+                    preserveAspectRatio: 'none' 
+                  },
+                    [...Array(5)].map((_, i) => e('line', { 
+                      key: 'h' + i, 
+                      x1: '0', 
+                      y1: i * 20, 
+                      x2: '300', 
+                      y2: i * 20, 
+                      stroke: colors.teal, 
+                      strokeWidth: '0.5', 
+                      opacity: '0.2' 
+                    })),
+                    [...Array(15)].map((_, i) => e('line', { 
+                      key: 'v' + i, 
+                      x1: i * 20, 
+                      y1: '0', 
+                      x2: i * 20, 
+                      y2: '80', 
+                      stroke: colors.teal, 
+                      strokeWidth: '0.5', 
+                      opacity: '0.2' 
+                    })),
+                    e('path', { 
+                      d: generateWave(0, 15), 
+                      fill: 'none', 
+                      stroke: colors.orange, 
+                      strokeWidth: '1.5', 
+                      opacity: '0.4' 
+                    }),
+                    e('path', { 
+                      d: generateWave(1.5, 20), 
+                      fill: 'none', 
+                      stroke: colors.mustard, 
+                      strokeWidth: '2', 
+                      style: { filter: 'drop-shadow(0 0 6px ' + colors.mustard + ')' } 
+                    })
+                  )
+                )
+              ),
+              
+              // Control panel
+              e('div', { 
+                style: { 
+                  background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', 
+                  borderRadius: '0 0 10px 10px', 
+                  padding: '12px 10px' 
+                } 
+              },
+                // Compact controls - Stacked layout for mobile
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    gap: '10px', 
+                    marginBottom: '12px' 
+                  } 
+                },
+                  // Row 1: OSC 1 & 2
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      gap: '8px' 
+                    } 
+                  },
+                    // OSC 1
+                    e('div', { 
+                      style: { 
+                        flex: 1, 
+                        background: 'rgba(93, 64, 55, 0.05)', 
+                        borderRadius: '6px', 
+                        padding: '8px 6px' 
+                      } 
+                    },
+                      e('div', { 
+                        style: { 
+                          fontSize: '7px', 
+                          letterSpacing: '1.5px', 
+                          color: colors.orange, 
+                          marginBottom: '6px', 
+                          textAlign: 'center' 
+                        } 
+                      }, 'OSC 1'),
+                      e('div', { 
+                        style: { 
+                          display: 'flex', 
+                          justifyContent: 'center', 
+                          gap: '6px' 
+                        } 
+                      },
+                        e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange, size: 32 }),
+                        e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange, size: 32 })
+                      )
+                    ),
+                    // OSC 2
+                    e('div', { 
+                      style: { 
+                        flex: 1, 
+                        background: 'rgba(93, 64, 55, 0.05)', 
+                        borderRadius: '6px', 
+                        padding: '8px 6px' 
+                      } 
+                    },
+                      e('div', { 
+                        style: { 
+                          fontSize: '7px', 
+                          letterSpacing: '1.5px', 
+                          color: colors.teal, 
+                          marginBottom: '6px', 
+                          textAlign: 'center' 
+                        } 
+                      }, 'OSC 2'),
+                      e('div', { 
+                        style: { 
+                          display: 'flex', 
+                          justifyContent: 'center', 
+                          gap: '6px' 
+                        } 
+                      },
+                        e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal, size: 32 }),
+                        e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal, size: 32 })
+                      )
+                    )
+                  ),
+                  
+                  // Row 2: Filter
+                  e('div', { 
+                    style: { 
+                      background: 'rgba(93, 64, 55, 0.05)', 
+                      borderRadius: '6px', 
+                      padding: '8px 6px' 
+                    } 
+                  },
+                    e('div', { 
+                      style: { 
+                        fontSize: '7px', 
+                        letterSpacing: '1.5px', 
+                        color: colors.mustard, 
+                        marginBottom: '6px', 
+                        textAlign: 'center' 
+                      } 
+                    }, 'FILTER'),
+                    e('div', { 
+                      style: { 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        gap: '8px' 
+                      } 
+                    },
+                      e(Knob, { name: 'filterCutoff', label: 'CUT', color: colors.mustard, size: 32 }),
+                      e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard, size: 32 })
+                    )
+                  ),
+                  
+                  // Row 3: ADSR
+                  e('div', { 
+                    style: { 
+                      background: 'rgba(93, 64, 55, 0.05)', 
+                      borderRadius: '6px', 
+                      padding: '8px 6px' 
+                    } 
+                  },
+                    e('div', { 
+                      style: { 
+                        fontSize: '7px', 
+                        letterSpacing: '1.5px', 
+                        color: colors.walnut, 
+                        marginBottom: '6px', 
+                        textAlign: 'center' 
+                      } 
+                    }, 'ENVELOPE'),
+                    e('div', { 
+                      style: { 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        gap: '4px' 
+                      } 
+                    },
+                      e(Knob, { name: 'attack', label: 'A', color: colors.walnut, size: 28 }),
+                      e(Knob, { name: 'decay', label: 'D', color: colors.walnut, size: 28 }),
+                      e(Knob, { name: 'sustain', label: 'S', color: colors.walnut, size: 28 }),
+                      e(Knob, { name: 'release', label: 'R', color: colors.walnut, size: 28 })
+                    )
+                  )
+                ),
+                
+                // Note Pads
+                e('div', { 
+                  style: { 
+                    background: colors.darkBrown, 
+                    borderRadius: '6px', 
+                    padding: '10px 8px', 
+                    marginBottom: '10px',
+                    overflowX: 'auto',
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      gap: '4px',
+                      minWidth: 'max-content',
+                    } 
+                  },
+                    notes.map((note, i) => e(NotePad, { key: i, note: note, index: i }))
+                  )
+                ),
+                
+                // Bottom controls
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    gap: '8px',
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      gap: '8px', 
+                      alignItems: 'center' 
+                    } 
+                  },
+                    e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal, size: 30 }),
+                    e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange, size: 30 })
+                  ),
+                  // VU Meter
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      gap: '3px', 
+                      padding: '6px 8px', 
+                      background: colors.darkBrown, 
+                      borderRadius: '4px' 
+                    } 
+                  },
+                    [0.4, 0.7, 0.9, 0.6, 0.8, 0.5].map((level, i) => {
+                      const hasNotes = activeNotes.size > 0;
+                      const animatedLevel = hasNotes ? (level + Math.sin(time * 3 + i * 0.5) * 0.2) * knobValues.amplitude : 0.15;
+                      return e('div', { 
+                        key: i, 
+                        style: { 
+                          display: 'flex', 
+                          flexDirection: 'column-reverse', 
+                          gap: '1px' 
+                        } 
+                      },
+                        [...Array(5)].map((_, j) => {
+                          const isLit = j / 5 < animatedLevel;
+                          const segmentColor = j >= 4 ? colors.orange : j >= 2 ? colors.mustard : colors.teal;
+                          return e('div', { 
+                            key: j, 
+                            style: { 
+                              width: '6px', 
+                              height: '3px', 
+                              borderRadius: '1px', 
+                              background: isLit ? segmentColor : 'rgba(255,255,255,0.1)', 
+                              boxShadow: isLit ? '0 0 3px ' + segmentColor : 'none', 
+                              transition: 'all 0.08s' 
+                            } 
+                          });
+                        })
+                      );
+                    })
+                  )
+                ),
+                
+                // Instructions
+                e('div', { 
+                  style: { 
+                    textAlign: 'center', 
+                    marginTop: '8px', 
+                    fontSize: '6px', 
+                    color: colors.warmGray, 
+                    opacity: 0.6, 
+                    letterSpacing: '0.5px' 
+                  } 
+                },
+                  isMuted ? '🔇 UNMUTE TO PLAY' : '🔊 TAP PADS • DRAG KNOBS'
+                )
+              )
+            )
+          ),
+          
+          // Brand
+          e('div', { 
+            style: { 
+              marginTop: '30px', 
+              textAlign: 'center', 
+              opacity: loaded ? 1 : 0, 
+              transform: loaded ? 'translateY(0)' : 'translateY(20px)', 
+              transition: 'all 0.8s ease-out 0.8s' 
+            } 
+          },
+            e('h1', { 
+              style: { 
+                fontSize: '28px', 
+                fontWeight: '400', 
+                letterSpacing: '8px', 
+                textTransform: 'uppercase' 
+              } 
+            },
+              e('span', { style: { color: colors.orange } }, 'Two'),
+              e('span', { style: { color: colors.walnut } }, 'Pine')
+            )
+          )
+        );
+      }
+
+      // Desktop layout (original)
+      return e('section', {
+        style: {
+          minHeight: '100vh', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          padding: '100px 20px 60px',
+          cursor: activeKnob || volumeDragging ? 'ns-resize' : 'default',
+        },
+        className: 'no-select',
+      },
+        // Starburst
+        e('div', {
+          style: {
+            position: 'fixed', 
+            top: '8%', 
+            right: '8%', 
+            width: '120px', 
+            height: '120px',
+            opacity: loaded ? 0.08 : 0, 
+            transition: 'opacity 1.5s ease-out 0.5s',
+            transform: 'rotate(' + (time * 2) + 'deg)', 
+            pointerEvents: 'none',
+          }
+        },
+          e('svg', { viewBox: '0 0 100 100', fill: colors.orange },
+            [...Array(12)].map((_, i) => e('ellipse', { 
+              key: i, 
+              cx: '50', 
+              cy: '50', 
+              rx: '3', 
+              ry: '45', 
+              transform: 'rotate(' + (i * 30) + ' 50 50)' 
+            })),
+            e('circle', { cx: '50', cy: '50', r: '12' })
+          )
+        ),
+        // Synth container
+        e('div', {
+          style: {
+            opacity: loaded ? 1 : 0, 
+            transform: loaded ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.97)',
+            transition: 'all 1s ease-out 0.4s', 
+            display: 'flex', 
+            gap: '16px', 
+            alignItems: 'stretch',
+          }
+        },
+          // Volume
+          e('div', {
+            style: {
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              padding: '16px 12px', 
+              background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
+              borderRadius: '10px', 
+              boxShadow: '0 20px 40px -15px rgba(61, 46, 36, 0.4)',
+            }
+          },
+            e('button', {
+              onClick: () => { initAudio(); setIsMuted(!isMuted); },
+              style: {
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '50%', 
+                border: 'none',
+                background: isMuted ? colors.warmWhite : 'linear-gradient(135deg, ' + colors.orange + ' 0%, #c9693a 100%)',
+                boxShadow: isMuted ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : '0 4px 15px rgba(224, 123, 60, 0.5)',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                transition: 'all 0.2s',
+              }
+            },
+              e('svg', { 
+                width: '18', 
+                height: '18', 
+                viewBox: '0 0 24 24', 
+                fill: 'none', 
+                stroke: isMuted ? colors.warmGray : colors.cream, 
+                strokeWidth: '2' 
+              },
+                e('path', { d: 'M11 5L6 9H2v6h4l5 4V5z' }),
+                isMuted
+                  ? [
+                      e('line', { key: 'l1', x1: '23', y1: '9', x2: '17', y2: '15' }), 
+                      e('line', { key: 'l2', x1: '17', y1: '9', x2: '23', y2: '15' })
+                    ]
+                  : [
+                      e('path', { key: 'p1', d: 'M15.54 8.46a5 5 0 0 1 0 7.07' }), 
+                      e('path', { key: 'p2', d: 'M19.07 4.93a10 10 0 0 1 0 14.14' })
+                    ]
+              )
+            ),
+            e('div', {
+              ref: volumeBarRef,
+              onMouseDown: (evt) => { 
+                evt.preventDefault(); 
+                initAudio(); 
+                setVolumeDragging(true); 
+                updateVolumeFromEvent(evt); 
+              },
+              onTouchStart: (evt) => { 
+                evt.preventDefault(); 
+                initAudio(); 
+                setVolumeDragging(true); 
+                updateVolumeFromEvent(evt); 
+              },
+              style: { 
+                width: '6px', 
+                height: '100px', 
+                background: colors.darkBrown, 
+                borderRadius: '3px', 
+                position: 'relative', 
+                cursor: 'ns-resize',
+                touchAction: 'none',
+              }
+            },
+              e('div', { 
+                style: { 
+                  position: 'absolute', 
+                  bottom: 0, 
+                  left: 0, 
+                  right: 0, 
+                  height: (volume * 100) + '%', 
+                  background: 'linear-gradient(to top, ' + colors.teal + ', ' + colors.mustard + ')', 
+                  borderRadius: '3px', 
+                  transition: volumeDragging ? 'none' : 'height 0.1s' 
+                } 
+              }),
+              e('div', { 
+                style: { 
+                  position: 'absolute', 
+                  bottom: 'calc(' + (volume * 100) + '% - 5px)', 
+                  left: '50%', 
+                  transform: 'translateX(-50%)', 
+                  width: '14px', 
+                  height: '10px', 
+                  background: colors.warmWhite, 
+                  borderRadius: '2px', 
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)', 
+                  transition: volumeDragging ? 'none' : 'bottom 0.1s' 
+                } 
+              })
+            ),
+            e('div', { 
+              style: { 
+                fontSize: '7px', 
+                letterSpacing: '1px', 
+                color: colors.walnutLight 
+              } 
+            }, 'VOL')
+          ),
+          // Main device
+          e('div', {
+            style: {
+              width: '680px', 
+              maxWidth: '85vw',
+              background: 'linear-gradient(180deg, ' + colors.walnut + ' 0%, ' + colors.darkBrown + ' 100%)',
+              borderRadius: '14px', 
+              padding: '10px',
+              boxShadow: '0 30px 60px -20px rgba(61, 46, 36, 0.4), 0 50px 100px -30px rgba(61, 46, 36, 0.3)',
+            }
+          },
+            // Wood panel
+            e('div', {
+              style: {
+                background: 'linear-gradient(90deg, ' + colors.walnutLight + ' 0%, #9C8B75 20%, ' + colors.walnutLight + ' 40%, #7D6B55 60%, ' + colors.walnutLight + ' 80%, #9C8B75 100%)',
+                borderRadius: '10px 10px 0 0', 
+                padding: '16px 20px 12px', 
+                position: 'relative',
+              }
+            },
+              e('div', { 
+                style: { 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  marginBottom: '12px' 
+                } 
+              },
+                e('div', { 
+                  style: { 
+                    fontSize: '10px', 
+                    letterSpacing: '4px', 
+                    color: colors.darkBrown, 
+                    textTransform: 'uppercase', 
+                    fontWeight: '600' 
+                  } 
+                }, 'TwoPine')
+              ),
+              e('div', { 
+                style: { 
+                  background: '#1a1a18', 
+                  borderRadius: '6px', 
+                  padding: '10px', 
+                  boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)' 
+                } 
+              },
+                e('svg', { 
+                  width: '100%', 
+                  height: '60', 
+                  viewBox: '0 0 300 80', 
+                  preserveAspectRatio: 'none' 
+                },
+                  [...Array(5)].map((_, i) => e('line', { 
+                    key: 'h' + i, 
+                    x1: '0', 
+                    y1: i * 20, 
+                    x2: '300', 
+                    y2: i * 20, 
+                    stroke: colors.teal, 
+                    strokeWidth: '0.5', 
+                    opacity: '0.2' 
+                  })),
+                  [...Array(15)].map((_, i) => e('line', { 
+                    key: 'v' + i, 
+                    x1: i * 20, 
+                    y1: '0', 
+                    x2: i * 20, 
+                    y2: '80', 
+                    stroke: colors.teal, 
+                    strokeWidth: '0.5', 
+                    opacity: '0.2' 
+                  })),
+                  e('path', { 
+                    d: generateWave(0, 15), 
+                    fill: 'none', 
+                    stroke: colors.orange, 
+                    strokeWidth: '1.5', 
+                    opacity: '0.4' 
+                  }),
+                  e('path', { 
+                    d: generateWave(1.5, 20), 
+                    fill: 'none', 
+                    stroke: colors.mustard, 
+                    strokeWidth: '2', 
+                    style: { filter: 'drop-shadow(0 0 6px ' + colors.mustard + ')' } 
+                  })
+                )
+              )
+            ),
+            // Control panel
+            e('div', { 
+              style: { 
+                background: 'linear-gradient(180deg, ' + colors.warmWhite + ' 0%, #E8E2D6 100%)', 
+                borderRadius: '0 0 10px 10px', 
+                padding: '16px 20px' 
+              } 
+            },
+              // Controls
+              e('div', { 
+                style: { 
+                  display: 'flex', 
+                  gap: '12px', 
+                  marginBottom: '16px' 
+                } 
+              },
+                // OSC 1
+                e('div', { 
+                  style: { 
+                    flex: 1, 
+                    background: 'rgba(93, 64, 55, 0.05)', 
+                    borderRadius: '8px', 
+                    padding: '12px' 
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      fontSize: '8px', 
+                      letterSpacing: '2px', 
+                      color: colors.orange, 
+                      marginBottom: '10px', 
+                      textAlign: 'center' 
+                    } 
+                  }, 'OSC 1'),
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      gap: '8px' 
+                    } 
+                  },
+                    e(Knob, { name: 'osc1Freq', label: 'TUNE', color: colors.orange, size: 38 }),
+                    e(Knob, { name: 'osc1Mix', label: 'MIX', color: colors.orange, size: 38 })
+                  )
+                ),
+                // OSC 2
+                e('div', { 
+                  style: { 
+                    flex: 1, 
+                    background: 'rgba(93, 64, 55, 0.05)', 
+                    borderRadius: '8px', 
+                    padding: '12px' 
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      fontSize: '8px', 
+                      letterSpacing: '2px', 
+                      color: colors.teal, 
+                      marginBottom: '10px', 
+                      textAlign: 'center' 
+                    } 
+                  }, 'OSC 2'),
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      gap: '8px' 
+                    } 
+                  },
+                    e(Knob, { name: 'osc2Freq', label: 'TUNE', color: colors.teal, size: 38 }),
+                    e(Knob, { name: 'osc2Mix', label: 'MIX', color: colors.teal, size: 38 })
+                  )
+                ),
+                // Filter
+                e('div', { 
+                  style: { 
+                    flex: 1, 
+                    background: 'rgba(93, 64, 55, 0.05)', 
+                    borderRadius: '8px', 
+                    padding: '12px' 
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      fontSize: '8px', 
+                      letterSpacing: '2px', 
+                      color: colors.mustard, 
+                      marginBottom: '10px', 
+                      textAlign: 'center' 
+                    } 
+                  }, 'FILTER'),
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      gap: '8px' 
+                    } 
+                  },
+                    e(Knob, { name: 'filterCutoff', label: 'CUT', color: colors.mustard, size: 38 }),
+                    e(Knob, { name: 'filterRes', label: 'RES', color: colors.mustard, size: 38 })
+                  )
+                ),
+                // ADSR
+                e('div', { 
+                  style: { 
+                    flex: 1.5, 
+                    background: 'rgba(93, 64, 55, 0.05)', 
+                    borderRadius: '8px', 
+                    padding: '12px' 
+                  } 
+                },
+                  e('div', { 
+                    style: { 
+                      fontSize: '8px', 
+                      letterSpacing: '2px', 
+                      color: colors.walnut, 
+                      marginBottom: '10px', 
+                      textAlign: 'center' 
+                    } 
+                  }, 'ENVELOPE'),
+                  e('div', { 
+                    style: { 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      gap: '6px' 
+                    } 
+                  },
+                    e(Knob, { name: 'attack', label: 'A', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'decay', label: 'D', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'sustain', label: 'S', color: colors.walnut, size: 34 }),
+                    e(Knob, { name: 'release', label: 'R', color: colors.walnut, size: 34 })
+                  )
+                )
+              ),
+              // Note Pads
+              e('div', { 
+                style: { 
+                  background: colors.darkBrown, 
+                  borderRadius: '8px', 
+                  padding: '14px 16px', 
+                  marginBottom: '14px' 
+                } 
+              },
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    gap: '6px' 
+                  } 
+                },
+                  notes.map((note, i) => e(NotePad, { key: i, note: note, index: i }))
+                )
+              ),
+              // Bottom
+              e('div', { 
+                style: { 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center' 
+                } 
+              },
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    gap: '10px', 
+                    alignItems: 'flex-end' 
+                  } 
+                },
+                  e(Knob, { name: 'reverb', label: 'REVERB', color: colors.teal, size: 36 }),
+                  e(Knob, { name: 'amplitude', label: 'AMP', color: colors.orange, size: 36 })
+                ),
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    gap: '5px', 
+                    padding: '8px 12px', 
+                    background: colors.darkBrown, 
+                    borderRadius: '5px' 
+                  } 
+                },
+                  [0.4, 0.7, 0.9, 0.6, 0.8, 0.5].map((level, i) => {
+                    const hasNotes = activeNotes.size > 0;
+                    const animatedLevel = hasNotes ? (level + Math.sin(time * 3 + i * 0.5) * 0.2) * knobValues.amplitude : 0.15;
+                    return e('div', { 
+                      key: i, 
+                      style: { 
+                        display: 'flex', 
+                        flexDirection: 'column-reverse', 
+                        gap: '2px' 
+                      } 
+                    },
+                      [...Array(5)].map((_, j) => {
+                        const isLit = j / 5 < animatedLevel;
+                        const segmentColor = j >= 4 ? colors.orange : j >= 2 ? colors.mustard : colors.teal;
+                        return e('div', { 
+                          key: j, 
+                          style: { 
+                            width: '8px', 
+                            height: '4px', 
+                            borderRadius: '1px', 
+                            background: isLit ? segmentColor : 'rgba(255,255,255,0.1)', 
+                            boxShadow: isLit ? '0 0 4px ' + segmentColor : 'none', 
+                            transition: 'all 0.08s' 
+                          } 
+                        });
+                      })
+                    );
+                  })
+                )
+              ),
+              e('div', { 
+                style: { 
+                  textAlign: 'center', 
+                  marginTop: '10px', 
+                  fontSize: '7px', 
+                  color: colors.warmGray, 
+                  opacity: 0.5, 
+                  letterSpacing: '1px' 
+                } 
+              },
+                isMuted ? '🔇 UNMUTE TO PLAY' : '🔊 CLICK PADS TO PLAY', ' • DRAG KNOBS TO ADJUST'
+              )
+            )
+          )
+        ),
+        // Brand
+        e('div', { 
+          style: { 
+            marginTop: '40px', 
+            textAlign: 'center', 
+            opacity: loaded ? 1 : 0, 
+            transform: loaded ? 'translateY(0)' : 'translateY(20px)', 
+            transition: 'all 0.8s ease-out 0.8s' 
+          } 
+        },
+          e('h1', { 
+            style: { 
+              fontSize: 'clamp(24px, 4vw, 40px)', 
+              fontWeight: '400', 
+              letterSpacing: '10px', 
+              textTransform: 'uppercase' 
+            } 
+          },
+            e('span', { style: { color: colors.orange } }, 'Two'),
+            e('span', { style: { color: colors.walnut } }, 'Pine')
+          )
+        )
+      );
+    };
+
+    // ============ OTHER PAGES (Responsive) ============
+    const TechnologyPage = () => {
+      const [loaded, setLoaded] = useState(false);
+      const isMobile = useIsMobile();
+      useEffect(() => { setLoaded(true); }, []);
+
+      const products = [
+        { 
+          name: 'Layers', 
+          status: 'AVAILABLE NOW', 
+          description: 'A 10 track looper IOS app designed with ambient musicians in mind.', 
+          specs: ['10 Tracks', 'iOS', 'Ambient Focused', 'Loop Control'], 
+          link: '#' 
+        },
+        { 
+          name: 'Pulse Control -1', 
+          status: 'AVAILABLE NOW', 
+          description: "An open source midi controller and desktop interface designed to control sound with the beat of one's heart.", 
+          specs: ['Open Source', 'MIDI Controller', 'Desktop Interface', 'Biometric Input'], 
+          link: '#' 
+        },
+        { 
+          name: 'TwoPine Web Synth', 
+          status: 'AVAILABLE NOW', 
+          description: 'The synthesizer you just played. A fully functional dual-oscillator instrument running entirely in your browser.', 
+          specs: ['Web Audio API', 'ADSR Envelope', 'Reverb FX', 'Touch Ready'], 
+          link: '#' 
+        },
+      ];
+
+      return e('section', { 
+        style: { 
+          minHeight: '100vh', 
+          padding: isMobile ? '100px 20px 60px' : '140px 40px 80px', 
+          maxWidth: '1000px', 
+          margin: '0 auto' 
+        } 
+      },
+        e('div', { 
+          style: { 
+            opacity: loaded ? 1 : 0, 
+            transform: loaded ? 'translateY(0)' : 'translateY(20px)', 
+            transition: 'all 0.8s ease-out' 
+          } 
+        },
+          e('h1', { 
+            style: { 
+              fontSize: isMobile ? '24px' : '32px', 
+              fontWeight: '400', 
+              letterSpacing: isMobile ? '4px' : '8px', 
+              marginBottom: '20px', 
+              color: colors.walnut 
+            } 
+          }, 'TECHNOLOGY'),
+          e('p', { 
+            style: { 
+              fontSize: '14px', 
+              color: colors.warmGray, 
+              lineHeight: '1.8', 
+              maxWidth: '600px', 
+              marginBottom: isMobile ? '40px' : '60px' 
+            } 
+          }, 'We design instruments that bridge the gap between vintage analog character and modern workflow integration. Every product is built to inspire.'),
+          e('div', { 
+            style: { 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: isMobile ? '30px' : '40px' 
+            } 
+          },
+            products.map((product, i) =>
+              e('div', {
+                key: i,
+                style: {
+                  background: colors.warmWhite, 
+                  borderRadius: '16px', 
+                  padding: isMobile ? '30px 20px' : '40px',
+                  border: '1px solid rgba(93, 64, 55, 0.1)',
+                  opacity: loaded ? 1 : 0, 
+                  transform: loaded ? 'translateY(0)' : 'translateY(20px)',
+                  transition: 'all 0.8s ease-out ' + (0.2 + i * 0.1) + 's',
+                }
+              },
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'flex-start', 
+                    marginBottom: '20px', 
+                    flexWrap: 'wrap', 
+                    gap: '10px' 
+                  } 
+                },
+                  e('h2', { 
+                    style: { 
+                      fontSize: isMobile ? '16px' : '20px', 
+                      fontWeight: '500', 
+                      letterSpacing: '3px', 
+                      color: colors.darkBrown 
+                    } 
+                  }, product.name),
+                  product.link
+                    ? e('a', {
+                        href: product.link,
+                        style: { 
+                          fontSize: '9px', 
+                          letterSpacing: '2px', 
+                          padding: '6px 12px', 
+                          borderRadius: '20px', 
+                          background: colors.teal, 
+                          color: colors.cream, 
+                          textDecoration: 'none', 
+                          transition: 'all 0.3s', 
+                          cursor: 'pointer' 
+                        },
+                        onMouseEnter: (evt) => evt.target.style.background = colors.orange,
+                        onMouseLeave: (evt) => evt.target.style.background = colors.teal,
+                      }, product.status)
+                    : e('span', { 
+                        style: { 
+                          fontSize: '9px', 
+                          letterSpacing: '2px', 
+                          padding: '6px 12px', 
+                          borderRadius: '20px', 
+                          background: product.status === 'AVAILABLE NOW' ? colors.teal : colors.orange, 
+                          color: colors.cream 
+                        } 
+                      }, product.status)
+                ),
+                e('p', { 
+                  style: { 
+                    fontSize: '14px', 
+                    color: colors.warmGray, 
+                    lineHeight: '1.8', 
+                    marginBottom: '25px' 
+                  } 
+                }, product.description),
+                e('div', { 
+                  style: { 
+                    display: 'flex', 
+                    gap: '12px', 
+                    flexWrap: 'wrap' 
+                  } 
+                },
+                  product.specs.map((spec, j) =>
+                    e('span', { 
+                      key: j, 
+                      style: { 
+                        fontSize: '10px', 
+                        letterSpacing: '1px', 
+                        padding: '8px 14px', 
+                        borderRadius: '6px', 
+                        background: 'rgba(93, 64, 55, 0.08)', 
+                        color: colors.walnut 
+                      } 
+                    }, spec)
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
+    };
+
+    const MusicPage = () => {
+      const [loaded, setLoaded] = useState(false);
+      const isMobile = useIsMobile();
+      useEffect(() => { setLoaded(true); }, []);
+
+      return e('section', { 
+        style: { 
+          minHeight: '100vh', 
+          padding: isMobile ? '100px 20px 60px' : '140px 40px 80px', 
+          maxWidth: '1000px', 
+          margin: '0 auto' 
+        } 
+      },
+        e('div', { 
+          style: { 
+            opacity: loaded ? 1 : 0, 
+            transform: loaded ? 'translateY(0)' : 'translateY(20px)', 
+            transition: 'all 0.8s ease-out' 
+          } 
+        },
+          e('h1', { 
+            style: { 
+              fontSize: isMobile ? '24px' : '32px', 
+              fontWeight: '400', 
+              letterSpacing: isMobile ? '4px' : '8px', 
+              marginBottom: isMobile ? '40px' : '60px', 
+              color: colors.walnut 
+            } 
+          }, 'MUSIC'),
+          e('div', { 
+            style: { 
+              background: colors.warmWhite, 
+              borderRadius: '16px', 
+              padding: isMobile ? '40px 20px' : '60px 40px', 
+              border: '1px solid rgba(93, 64, 55, 0.1)', 
+              textAlign: 'center', 
+              marginBottom: '40px' 
+            } 
+          },
+            e('div', { 
+              style: { 
+                fontSize: '11px', 
+                letterSpacing: '3px', 
+                color: colors.orange, 
+                marginBottom: '20px' 
+              } 
+            }, 'LISTEN NOW'),
+            e('h2', { 
+              style: { 
+                fontSize: isMobile ? '18px' : '24px', 
+                fontWeight: '400', 
+                letterSpacing: '4px', 
+                color: colors.darkBrown, 
+                marginBottom: '30px' 
+              } 
+            }, 'TwoPine on Bandcamp'),
+            e('a', {
+              href: 'https://twopine.bandcamp.com', 
+              target: '_blank', 
+              rel: 'noopener noreferrer',
+              style: { 
+                display: 'inline-block', 
+                padding: '14px 32px', 
+                background: colors.walnut, 
+                color: colors.cream, 
+                textDecoration: 'none', 
+                borderRadius: '8px', 
+                fontSize: '11px', 
+                letterSpacing: '2px', 
+                transition: 'all 0.3s' 
+              },
+              onMouseEnter: (evt) => evt.target.style.background = colors.orange,
+              onMouseLeave: (evt) => evt.target.style.background = colors.walnut,
+            }, 'EXPLORE RELEASES')
+          ),
+          e('div', { 
+            style: { 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '20px' 
+            } 
+          },
+            [
+              { name: 'Spotify', url: 'https://open.spotify.com/artist/7tGYeWAQNzfxtSfbuM4iz9' },
+              { name: 'Apple Music', url: 'https://music.apple.com/us/artist/twopine/1542254883' },
+              { name: 'YouTube', url: 'https://www.youtube.com/@twopine' },
+              { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
+            ].map((platform, i) =>
+              e('a', {
+                key: i, 
+                href: platform.url, 
+                target: '_blank', 
+                rel: 'noopener noreferrer',
+                style: {
+                  background: colors.warmWhite, 
+                  borderRadius: '12px', 
+                  padding: '24px',
+                  border: '1px solid rgba(93, 64, 55, 0.1)', 
+                  textDecoration: 'none',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '12px', 
+                  letterSpacing: '2px', 
+                  color: colors.walnut, 
+                  transition: 'all 0.3s',
+                },
+                onMouseEnter: (evt) => { 
+                  evt.target.style.borderColor = colors.orange; 
+                  evt.target.style.color = colors.orange; 
+                },
+                onMouseLeave: (evt) => { 
+                  evt.target.style.borderColor = 'rgba(93, 64, 55, 0.1)'; 
+                  evt.target.style.color = colors.walnut; 
+                },
+              }, platform.name.toUpperCase())
+            )
+          )
+        )
+      );
+    };
+
+    const StorePage = () => {
+      const [loaded, setLoaded] = useState(false);
+      const isMobile = useIsMobile();
+      useEffect(() => { setLoaded(true); }, []);
+
+      return e('section', { 
+        style: { 
+          minHeight: '100vh', 
+          padding: isMobile ? '100px 20px 60px' : '140px 40px 80px', 
+          maxWidth: '1000px', 
+          margin: '0 auto' 
+        } 
+      },
+        e('div', { 
+          style: { 
+            opacity: loaded ? 1 : 0, 
+            transform: loaded ? 'translateY(0)' : 'translateY(20px)', 
+            transition: 'all 0.8s ease-out' 
+          } 
+        },
+          e('h1', { 
+            style: { 
+              fontSize: isMobile ? '24px' : '32px', 
+              fontWeight: '400', 
+              letterSpacing: isMobile ? '4px' : '8px', 
+              marginBottom: '20px', 
+              color: colors.walnut 
+            } 
+          }, 'STORE'),
+          e('p', { 
+            style: { 
+              fontSize: '14px', 
+              color: colors.warmGray, 
+              lineHeight: '1.8', 
+              maxWidth: '600px', 
+              marginBottom: isMobile ? '40px' : '60px' 
+            } 
+          }, 'Merchandise and digital goods.'),
+          e('div', { 
+            style: { 
+              background: colors.warmWhite, 
+              borderRadius: '16px', 
+              padding: isMobile ? '40px 20px' : '60px 40px', 
+              border: '1px solid rgba(93, 64, 55, 0.1)', 
+              textAlign: 'center' 
+            } 
+          },
+            e('div', { 
+              style: { 
+                fontSize: '11px', 
+                letterSpacing: '3px', 
+                color: colors.teal, 
+                marginBottom: '20px' 
+              } 
+            }, 'SHOP'),
+            e('h2', { 
+              style: { 
+                fontSize: isMobile ? '18px' : '24px', 
+                fontWeight: '400', 
+                letterSpacing: '4px', 
+                color: colors.darkBrown, 
+                marginBottom: '15px' 
+              } 
+            }, 'TwoPine Store'),
+            e('p', { 
+              style: { 
+                fontSize: '13px', 
+                color: colors.warmGray, 
+                marginBottom: '30px' 
+              } 
+            }, 'Music, merch, and more available on Bandcamp'),
+            e('a', {
+              href: 'https://twopine.bandcamp.com/merch', 
+              target: '_blank', 
+              rel: 'noopener noreferrer',
+              style: { 
+                display: 'inline-block', 
+                padding: '14px 32px', 
+                background: colors.walnut, 
+                color: colors.cream, 
+                textDecoration: 'none', 
+                borderRadius: '8px', 
+                fontSize: '11px', 
+                letterSpacing: '2px', 
+                transition: 'all 0.3s' 
+              },
+              onMouseEnter: (evt) => evt.target.style.background = colors.orange,
+              onMouseLeave: (evt) => evt.target.style.background = colors.walnut,
+            }, 'VISIT STORE')
+          )
+        )
+      );
+    };
+
+    const ContactPage = () => {
+      const [loaded, setLoaded] = useState(false);
+      const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+      const [submitted, setSubmitted] = useState(false);
+      const isMobile = useIsMobile();
+      useEffect(() => { setLoaded(true); }, []);
+
+      const handleSubmit = (evt) => {
+        evt.preventDefault();
+        const mailtoLink = 'mailto:contact@twopinemusic.com?subject=Message from ' + formData.name + '&body=' + encodeURIComponent(formData.message) + '%0A%0AFrom: ' + formData.email;
+        window.location.href = mailtoLink;
+        setSubmitted(true);
+      };
+
+      const inputStyle = {
+        width: '100%', 
+        padding: '14px 16px', 
+        border: '1px solid rgba(93, 64, 55, 0.2)',
+        borderRadius: '8px', 
+        fontSize: '14px', 
+        background: colors.warmWhite,
+        outline: 'none', 
+        transition: 'border-color 0.3s', 
+        fontFamily: 'inherit',
+      };
+
+      return e('section', { 
+        style: { 
+          minHeight: '100vh', 
+          padding: isMobile ? '100px 20px 60px' : '140px 40px 80px', 
+          maxWidth: '600px', 
+          margin: '0 auto' 
+        } 
+      },
+        e('div', { 
+          style: { 
+            opacity: loaded ? 1 : 0, 
+            transform: loaded ? 'translateY(0)' : 'translateY(20px)', 
+            transition: 'all 0.8s ease-out' 
+          } 
+        },
+          e('h1', { 
+            style: { 
+              fontSize: isMobile ? '24px' : '32px', 
+              fontWeight: '400', 
+              letterSpacing: isMobile ? '4px' : '8px', 
+              marginBottom: '20px', 
+              color: colors.walnut 
+            } 
+          }, 'CONTACT'),
+          e('p', { 
+            style: { 
+              fontSize: '14px', 
+              color: colors.warmGray, 
+              lineHeight: '1.8', 
+              marginBottom: isMobile ? '40px' : '50px' 
+            } 
+          }, 'Questions about products, collaboration inquiries, or just want to say hello? Reach out.'),
+          !submitted
+            ? e('div', { 
+                style: { 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '24px' 
+                } 
+              },
+                e('div', null,
+                  e('label', { 
+                    style: { 
+                      fontSize: '10px', 
+                      letterSpacing: '2px', 
+                      color: colors.walnut, 
+                      display: 'block', 
+                      marginBottom: '8px' 
+                    } 
+                  }, 'NAME'),
+                  e('input', {
+                    type: 'text', 
+                    value: formData.name,
+                    onChange: (evt) => setFormData({ ...formData, name: evt.target.value }),
+                    style: inputStyle,
+                    onFocus: (evt) => evt.target.style.borderColor = colors.orange,
+                    onBlur: (evt) => evt.target.style.borderColor = 'rgba(93, 64, 55, 0.2)',
+                  })
+                ),
+                e('div', null,
+                  e('label', { 
+                    style: { 
+                      fontSize: '10px', 
+                      letterSpacing: '2px', 
+                      color: colors.walnut, 
+                      display: 'block', 
+                      marginBottom: '8px' 
+                    } 
+                  }, 'EMAIL'),
+                  e('input', {
+                    type: 'email', 
+                    value: formData.email,
+                    onChange: (evt) => setFormData({ ...formData, email: evt.target.value }),
+                    style: inputStyle,
+                    onFocus: (evt) => evt.target.style.borderColor = colors.orange,
+                    onBlur: (evt) => evt.target.style.borderColor = 'rgba(93, 64, 55, 0.2)',
+                  })
+                ),
+                e('div', null,
+                  e('label', { 
+                    style: { 
+                      fontSize: '10px', 
+                      letterSpacing: '2px', 
+                      color: colors.walnut, 
+                      display: 'block', 
+                      marginBottom: '8px' 
+                    } 
+                  }, 'MESSAGE'),
+                  e('textarea', {
+                    value: formData.message, 
+                    rows: 5,
+                    onChange: (evt) => setFormData({ ...formData, message: evt.target.value }),
+                    style: { ...inputStyle, resize: 'vertical' },
+                    onFocus: (evt) => evt.target.style.borderColor = colors.orange,
+                    onBlur: (evt) => evt.target.style.borderColor = 'rgba(93, 64, 55, 0.2)',
+                  })
+                ),
+                e('button', {
+                  onClick: handleSubmit,
+                  style: {
+                    padding: '16px 32px', 
+                    background: colors.walnut, 
+                    color: colors.cream,
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    fontSize: '11px', 
+                    letterSpacing: '2px',
+                    cursor: 'pointer', 
+                    transition: 'all 0.3s', 
+                    alignSelf: 'flex-start',
+                  },
+                  onMouseEnter: (evt) => evt.target.style.background = colors.orange,
+                  onMouseLeave: (evt) => evt.target.style.background = colors.walnut,
+                }, 'SEND MESSAGE')
+              )
+            : e('div', { 
+                style: { 
+                  textAlign: 'center', 
+                  padding: isMobile ? '40px 0' : '60px 0' 
+                } 
+              },
+                e('div', { 
+                  style: { 
+                    fontSize: '48px', 
+                    marginBottom: '20px' 
+                  } 
+                }, '✓'),
+                e('p', { 
+                  style: { 
+                    fontSize: '14px', 
+                    color: colors.warmGray 
+                  } 
+                }, 'Your email client should open with the message. Thanks for reaching out!')
+              ),
+          e('div', { 
+            style: { 
+              marginTop: isMobile ? '40px' : '60px', 
+              paddingTop: '40px', 
+              borderTop: '1px solid rgba(93, 64, 55, 0.1)' 
+            } 
+          },
+            e('div', { 
+              style: { 
+                fontSize: '10px', 
+                letterSpacing: '2px', 
+                color: colors.walnut, 
+                marginBottom: '20px' 
+              } 
+            }, 'CONNECT'),
+            e('div', { 
+              style: { 
+                display: 'flex', 
+                gap: '20px', 
+                flexWrap: 'wrap' 
+              } 
+            },
+              [
+                { name: 'Instagram', url: 'https://www.instagram.com/twopinemusic/' },
+                { name: 'YouTube', url: 'https://www.youtube.com/@twopine' },
+                { name: 'Bandcamp', url: 'https://twopine.bandcamp.com' },
+              ].map((social, i) =>
+                e('a', {
+                  key: i, 
+                  href: social.url, 
+                  target: '_blank', 
+                  rel: 'noopener noreferrer',
+                  style: { 
+                    fontSize: '12px', 
+                    letterSpacing: '1px', 
+                    color: colors.warmGray, 
+                    textDecoration: 'none', 
+                    transition: 'color 0.3s' 
+                  },
+                  onMouseEnter: (evt) => evt.target.style.color = colors.orange,
+                  onMouseLeave: (evt) => evt.target.style.color = colors.warmGray,
+                }, social.name)
+              )
+            )
+          )
+        )
+      );
+    };
+
+    // ============ MAIN APP ============
+    const App = () => {
+      const [currentPage, setCurrentPage] = useState('home');
+
+      const renderPage = () => {
+        switch (currentPage) {
+          case 'technology': return e(TechnologyPage);
+          case 'music': return e(MusicPage);
+          case 'store': return e(StorePage);
+          case 'contact': return e(ContactPage);
+          default: return e(HomePage);
+        }
+      };
+
+      return e('div', { 
+        style: { 
+          background: colors.cream, 
+          minHeight: '100vh' 
+        } 
+      },
+        e(GrainOverlay),
+        e(Navigation, { currentPage: currentPage, setCurrentPage: setCurrentPage }),
+        renderPage(),
+        e(Footer)
+      );
+    };
+
+    ReactDOM.render(e(App), document.getElementById('root'));
+  </script>
+</body>
+</html>
