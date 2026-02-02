@@ -107,6 +107,7 @@
           onClick: () => {
             setCurrentPage('home');
             setMobileMenuOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           },
           style: { 
             fontSize: isMobile ? '14px' : '16px', 
@@ -133,7 +134,10 @@
           menuItems.map(item =>
             e('a', {
               key: item,
-              onClick: () => setCurrentPage(item.toLowerCase()),
+              onClick: () => {
+                setCurrentPage(item.toLowerCase());
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              },
               style: {
                 color: currentPage === item.toLowerCase() ? colors.orange : colors.warmGray,
                 textDecoration: 'none', 
@@ -199,6 +203,7 @@
               onClick: () => {
                 setCurrentPage(item.toLowerCase());
                 setMobileMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               },
               style: {
                 fontSize: '24px',
@@ -289,6 +294,12 @@
       
       useEffect(() => { setLoaded(true); }, []);
 
+      const handlePageChange = (page) => {
+        console.log('Changing to page:', page); // Debug log
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
       return e('section', {
         style: {
           minHeight: '100vh',
@@ -346,7 +357,7 @@
             }
           }, 'Crafting instruments and experiences.'),
           
-          // CTA Buttons
+          // CTA Buttons - FIXED VERSION
           e('div', {
             style: {
               display: 'flex',
@@ -361,16 +372,7 @@
             ].map((btn, i) =>
               e('button', {
                 key: i,
-                onClick: (evt) => {
-                  evt.preventDefault();
-                  setCurrentPage(btn.page);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                },
-                onTouchEnd: (evt) => {
-                  evt.preventDefault();
-                  setCurrentPage(btn.page);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                },
+                onClick: () => handlePageChange(btn.page),
                 style: {
                   padding: '18px 36px',
                   background: i === 0 ? colors.walnut : 'transparent',
@@ -1057,6 +1059,11 @@
     // MAIN APP
     const App = () => {
       const [currentPage, setCurrentPage] = useState('home');
+
+      // Add effect to log state changes for debugging
+      useEffect(() => {
+        console.log('Current page changed to:', currentPage);
+      }, [currentPage]);
 
       const renderPage = () => {
         switch (currentPage) {
